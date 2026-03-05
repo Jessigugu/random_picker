@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>隨機點名系統 (固定大小版)</title>
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            background-color: #f0f2f5;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+        }
+        
+        .wrapper {
+            display: flex;
+            gap: 30px;
+            flex-wrap: wrap;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* 左邊：抽籤主畫面的卡片 (大小固定) */
+        .main-container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            text-align: center;
+            width: 450px;  /* 強制固定寬度 */
+            height: 500px; /* 強制固定高度 */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; /* 讓內容在固定的框框內上下置中 */
+        }
+
+        /* 右邊：紀錄列表的卡片 (大小固定) */
+        .history-container {
+            background: white;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 350px;  /* 強制固定寬度 */
+            height: 500px; /* 強制固定高度 */
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+        }
+
+        h1 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 20px;
+        }
+
+        h2 {
+            color: #333;
+            margin-top: 0;
+            margin-bottom: 15px;
+        }
+
+        .result {
+            font-size: 32px;
+            font-weight: bold;
+            color: #1a73e8;
+            margin: 30px 0;
+            flex-grow: 1; /* 讓結果文字佔據剩餘空間，確保按鈕能在底部 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+        }
+
+        button {
+            background-color: #1a73e8;
+            color: white;
+            border: none;
+            padding: 15px 32px;
+            font-size: 20px;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: background-color 0.3s;
+            width: 100%;
+            margin-top: auto; /* 將按鈕推到框框最下方 */
+        }
+
+        button:hover {
+            background-color: #1557b0;
+        }
+
+        button:active {
+            transform: scale(0.98);
+        }
+
+        button:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .history-list {
+            list-style-type: none;
+            padding: 0;
+            margin: 0;
+            overflow-y: auto; /* 內容超過固定高度時，顯示上下卷軸 */
+            flex-grow: 1;
+        }
+
+        .history-list li {
+            background-color: #f8f9fa;
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            border-radius: 6px;
+            border-left: 4px solid #34a853;
+            font-size: 16px;
+            color: #444;
+        }
+
+        .stats {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 15px;
+            text-align: right;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 10px;
+        }
+        
+        /* 美化一下右邊紀錄框框內的卷軸 */
+        .history-list::-webkit-scrollbar {
+            width: 8px;
+        }
+        .history-list::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+            border-radius: 4px;
+        }
+        .history-list::-webkit-scrollbar-thumb {
+            background: #c1c1c1; 
+            border-radius: 4px;
+        }
+        .history-list::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8; 
+        }
+    </style>
+</head>
+<body>
+
+<div class="wrapper">
+    <div class="main-container">
+        <h1>📝 課堂隨機點名</h1>
+        <div class="result" id="studentDisplay">點擊下方按鈕開始</div>
+        <button onclick="pickRandomStudent()" id="drawBtn">🎲 隨機抽人</button>
+    </div>
+
+    <div class="history-container">
+        <h2>📜 抽籤紀錄</h2>
+        <div class="stats" id="statsDisplay">目前已抽出：0 人</div>
+        <ul class="history-list" id="historyList"></ul>
+    </div>
+</div>
+
+
+<script>
+    let students = [{"名字": "文纯粹", "學號": "H34107026"}, {"名字": "陳靖則", "學號": "H34106070"}, {"名字": "曾慶瑀", "學號": "E54104070"}, {"名字": "李芸萱", "學號": "H34116211"}, {"名字": "劉耿宏", "學號": "H34116237"}, {"名字": "林靖雯", "學號": "H34116279"}, {"名字": "王晏國", "學號": "H44114025"}, {"名字": "高邦修", "學號": "D54114090"}, {"名字": "吳唯贊", "學號": "H34114065"}, {"名字": "趙誠全", "學號": "H34115053"}, {"名字": "邱渝媗", "學號": "F34111120"}, {"名字": "林秉續", "學號": "F94111198"}, {"名字": "洪　恩", "學號": "H34111033"}, {"名字": "許雅筑", "學號": "H34111164"}, {"名字": "黃健維", "學號": "H34125325"}, {"名字": "李展陞", "學號": "H34125016"}, {"名字": "施佳妤", "學號": "F54126014"}, {"名字": "胡靖偲", "學號": "H34126062"}, {"名字": "林紹揚", "學號": "H34126070"}, {"名字": "陳亭諼", "學號": "H34126096"}, {"名字": "林宸妤", "學號": "H34126169"}, {"名字": "籃翊慈", "學號": "H54126189"}, {"名字": "陳昊均", "學號": "D84126140"}, {"名字": "李秉翰", "學號": "H34124010"}, {"名字": "黄季琁", "學號": "H34124044"}, {"名字": "林萱琪", "學號": "H34124052"}, {"名字": "胡嘉茵", "學號": "H34125024"}, {"名字": "謝智賢", "學號": "AN4121725"}, {"名字": "李羿辰", "學號": "H34121012"}, {"名字": "葉家銓", "學號": "H34121054"}, {"名字": "龔　伶", "學號": "H34121070"}, {"名字": "余弘胤", "學號": "H34121088"}, {"名字": "王凌聖", "學號": "H34121169"}, {"名字": "林毓翔", "學號": "H34121216"}, {"名字": "楊小語", "學號": "H54121082"}, {"名字": "黃暐哲", "學號": "H34136025"}, {"名字": "陳姿佑", "學號": "H34136041"}, {"名字": "黃稚樺", "學號": "H34136114"}, {"名字": "李珈妤", "學號": "H34136130"}, {"名字": "王晴萱", "學號": "H34136156"}, {"名字": "王宥鈞", "學號": "H34136164"}, {"名字": "曾郁恩", "學號": "H34136172"}, {"名字": "温于萱", "學號": "H34136180"}, {"名字": "黃子寧", "學號": "H34136198"}, {"名字": "張家綺", "學號": "H34136229"}, {"名字": "古沛恩", "學號": "H54136249"}, {"名字": "邵筱琳 Shirley ,Hsiao-lin.shao", "學號": "D54134024"}, {"名字": "周品妤", "學號": "H34134015"}, {"名字": "陳冠廷", "學號": "H34134023"}, {"名字": "蔡心盈", "學號": "H34134031"}, {"名字": "許凱雁", "學號": "H34134049"}, {"名字": "張諭昕", "學號": "H34134057"}, {"名字": "蔡羽婕", "學號": "H34134073"}, {"名字": "黃致芸", "學號": "H54134035"}, {"名字": "蔡宇澔", "學號": "H34135011"}, {"名字": "吳政偉", "學號": "H34135037"}, {"名字": "徐子然", "學號": "H34131009"}, {"名字": "賓崇恩", "學號": "H34131025"}, {"名字": "邱少宜", "學號": "H34131041"}, {"名字": "謝少齊", "學號": "H34131075"}, {"名字": "石欣穎", "學號": "H34131083"}, {"名字": "蔡郁岑", "學號": "H34131106"}, {"名字": "鄭博瀚", "學號": "H34131114"}, {"名字": "本田柚萱", "學號": "H34131122"}, {"名字": "古軒科", "學號": "H34131130"}, {"名字": "陳建宇", "學號": "H34131148"}, {"名字": "蔡承蒲 Chang pu Tsai", "學號": "H34131180"}, {"名字": "吳櫂宇 Nick, Zhao-Yu, Wu", "學號": "H34131198"}, {"名字": "李岳骏", "學號": "H34131203"}, {"名字": "顏馨雅", "學號": "H34131211"}, {"名字": "蔡秀翎", "學號": "H34131237"}, {"名字": "王藝蓁", "學號": "H54131168"}, {"名字": "高晨恩", "學號": "H44131166"}, {"名字": "陳亮宇", "學號": "H44131239"}, {"名字": "王綵慧", "學號": "D44131163"}, {"名字": "施麗香", "學號": "H34145016"}, {"名字": "游智輝", "學號": "H34145024"}, {"名字": "徐睿廷", "學號": "H34146038"}, {"名字": "李沛紜", "學號": "H34146046"}, {"名字": "沈君遠", "學號": "H34146054"}, {"名字": "賴昀廷", "學號": "H34146062"}, {"名字": "陳威任", "學號": "H34146070"}, {"名字": "江語涵", "學號": "H34146096"}, {"名字": "周桓儀", "學號": "H34146101"}, {"名字": "劉鎔慈", "學號": "H34146119"}, {"名字": "董柏竑", "學號": "H34146127"}, {"名字": "王俞婷", "學號": "H34146135"}, {"名字": "黃郁喬", "學號": "H34146143"}, {"名字": "洪毓璟", "學號": "H34146177"}, {"名字": "邱暐庭", "學號": "H34146185"}, {"名字": "陳亭羽", "學號": "H34146193"}, {"名字": "林茂元", "學號": "H34146208"}, {"名字": "曾繁丞", "學號": "H34146216"}, {"名字": "陳姿羽", "學號": "H34146224"}, {"名字": "潘妍臻", "學號": "H34146232"}, {"名字": "陳子榛", "學號": "H44146064"}, {"名字": "陳麟燿", "學號": "H34146517"}, {"名字": "李孟淳", "學號": "B54144027"}, {"名字": "劉千慈 Stella Liu", "學號": "H34144010"}, {"名字": "江曼筠", "學號": "H34144052"}, {"名字": "賴建志", "學號": "H34144060"}, {"名字": "楊芸榛", "學號": "H34144078"}, {"名字": "李程恩", "學號": "H34144094"}, {"名字": "胡心菱", "學號": "AN4146725"}, {"名字": "劉啟曆", "學號": "H34145058"}, {"名字": "黃馨儀", "學號": "F64141244"}, {"名字": "薛丞佑", "學號": "H34141004"}, {"名字": "李睿恩", "學號": "H34141020"}, {"名字": "王翔鴻", "學號": "H34141046"}, {"名字": "林叔睿", "學號": "H34141088"}, {"名字": "傅少宇", "學號": "H34141096"}, {"名字": "莊竣騰", "學號": "H34141119"}, {"名字": "陳家鵬", "學號": "H34141127"}, {"名字": "吳宇恩", "學號": "H34141135"}, {"名字": "林祐丞", "學號": "H34141169"}, {"名字": "溫浩宇", "學號": "H34141177"}, {"名字": "王柏鈞", "學號": "H34141193"}, {"名字": "高偲菡", "學號": "H34141208"}, {"名字": "金邑潔", "學號": "H34141216"}, {"名字": "張毓廷", "學號": "H44141111"}];
+
+    let totalPicked = 0;
+
+    function pickRandomStudent() {
+        const display = document.getElementById("studentDisplay");
+        const button = document.getElementById("drawBtn");
+        
+        if (students.length === 0) {
+            display.innerText = "🎉 全班都已經抽完囉！ 🎉";
+            display.style.color = "#34a853";
+            return;
+        }
+
+        const randomIndex = Math.floor(Math.random() * students.length);
+        const finalStudent = students[randomIndex];
+        students.splice(randomIndex, 1);
+        
+        display.innerText = `${finalStudent.學號}\n${finalStudent.名字}`;
+        addRecord(finalStudent);
+        
+        if (students.length > 0) {
+            button.innerText = `🎲 再次隨機抽人 (剩餘 ${students.length} 人)`;
+        } else {
+            button.innerText = "✅ 全班已抽完";
+            button.disabled = true; 
+        }
+
+        display.style.color = "#d93025"; 
+        setTimeout(() => {
+            if (students.length > 0) { 
+                display.style.color = "#1a73e8";
+            } else {
+                display.style.color = "#34a853"; 
+            }
+        }, 1500);
+    }
+
+    function addRecord(student) {
+        const historyList = document.getElementById("historyList");
+        const statsDisplay = document.getElementById("statsDisplay");
+        
+        totalPicked++;
+        statsDisplay.innerText = `目前已抽出：${totalPicked} 人`;
+
+        const newRecord = document.createElement("li");
+        newRecord.innerText = `#${totalPicked}： ${student.學號} - ${student.名字}`;
+        
+        historyList.insertBefore(newRecord, historyList.firstChild);
+    }
+</script>
+
+</body>
+</html>
